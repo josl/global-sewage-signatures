@@ -1,0 +1,26 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# This file is part of global_sewage_signatures.
+# https://github.com/josl/Global_Sewage_Signatures
+
+# Licensed under the MIT license:
+# http://www.opensource.org/licenses/MIT-license
+# Copyright (c) 2016, Jose L. Bellod Cisneros & Kosai Al-Nakked
+# <bellod.cisneros@gmail.com & kosai@cbs.dtu.dk>
+
+[run]
+omit =
+    *tests.py
+branch = True
+source =
+    global_sewage_signatures
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    from urllib.parse import parse_qs
+    except ImportError:
