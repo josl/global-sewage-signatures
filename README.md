@@ -10,12 +10,30 @@ The main goal is to investigate if it is possible to group samples together geog
 
 ## Installation
 
+If you prefer to avoid installing redis yourself we provide a Docker container. Follow the instructions here:
+
 ```bash
 # Build Docker images
 docker build -t sewage-signatures .
 
 # Run container
 docker run --name sewage-redis -d sewage-signatures
+```
+
+If redis is install you need to start an instance of the database on port 4444
+
+```bash
+make redis
+```
+
+Then, you need to create a Redis Protocol file with all your redis comands
+
+```bash
+./scripts/mass_insertion.py --folder=/home/projects/cge/people/olund/projects/sewage/sewage5/ --output=dataset/redis_protocol.txt
+```
+
+```bash
+./scripts/mass_insertion.py --folder=/home/projects/cge/people/olund/projects/sewage/sewage5/ --output=dataset/redis_protocol.txt
 ```
 
 ## General Comands for Development

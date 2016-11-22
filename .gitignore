@@ -65,3 +65,7 @@ docs/_build/
 
 # Dataset
 dataset
+database/
+
+# VPN
+vpn/
