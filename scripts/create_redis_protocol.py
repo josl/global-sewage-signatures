@@ -15,11 +15,8 @@ from bitarray import bitarray
 from optparse import OptionParser
 import os
 
-r = redis.StrictRedis(db=0)
 
 # Source: https://gist.github.com/laserson/2689744
-
-
 def gen_redis_proto(*args):
     proto = ''
     proto += '*' + str(len(args)) + '\r\n'
@@ -36,14 +33,15 @@ parser.add_option("-o", "--output", dest="output",
 (options, args) = parser.parse_args()
 
 # folder = '/home/projects/cge/people/olund/projects/sewage/sewage5/'
-with open(args.output, 'w') as fh:
-    for root, directories, files in os.walk(args.folder):
-        for filename in files:
-            if 'b16' not in filename:
+with open(options.output, 'w') as fhl:
+    for root, directories, files in os.walk(options.folder):
+        for file_name in files:
+            if 'b16' not in file_name:
                 continue
+            print(file_name)
             # Join the two get absolute path.
-            filepath = os.path.join(root, filename)
+            file_path = os.path.join(root, file_name)
             a = bitarray()
-            with open(filepath, 'rb') as fh:
+            with open(file_path, 'rb') as fh:
                 a.fromfile(fh)
-                fh.write(gen_redis_proto('SET %s %s', % (file_name, a.tobytes())))
+                fhl.write(gen_redis_proto('SET %s %s' % (file_name, a.tobytes())))

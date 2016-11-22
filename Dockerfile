@@ -9,7 +9,7 @@
 # Copyright (c) 2016, Jose L. Bellod Cisneros & Kosai Al-Nakked
 # <bellod.cisneros@gmail.com & kosai@cbs.dtu.dk>
 
-FROM redis
+FROM python:latest
 MAINTAINER Jose L. Bellod Cisneros & Kosai Al-Nakked <bellod.cisneros@gmail.com & kosai@cbs.dtu.dk>
 
 
@@ -22,7 +22,6 @@ RUN apt-get update && apt-get install -y -qq --no-install-recommends \
     libcap-dev \
     libsqlite3-dev \
     reprepro \
-    python-pip \
  && rm -rf /var/lib/apt/lists/*
 
 

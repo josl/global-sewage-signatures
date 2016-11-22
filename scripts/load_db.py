@@ -15,7 +15,7 @@ from bitarray import bitarray
 from optparse import OptionParser
 import os
 
-r = redis.StrictRedis(db=0)
+r = redis.StrictRedis(db=0, port=6379)
 
 parser = OptionParser()
 parser.add_option("-i", "--folder", dest="folder",
@@ -25,13 +25,13 @@ parser.add_option("-i", "--folder", dest="folder",
 folder = '/home/projects/cge/people/olund/projects/sewage/sewage5/'
 bool_map = {False: '0', True: 1}
 for root, directories, files in os.walk(folder):
-        for filename in files:
-            if 'b16' not in filename:
+        for file_name in files:
+            if 'b16' not in file_name:
                 continue
             # Join the two get absolute path.
-            filepath = os.path.join(root, filename)
+            print(file_name)
+            filepath = os.path.join(root, file_name)
             a = bitarray()
             with open(filepath, 'rb') as fh:
                 a.fromfile(fh)
-                print(a.tobytes())
-                # r.set(file_name, a.tobytes())
+                r.set(file_name, a.tobytes())

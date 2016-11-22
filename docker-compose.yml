@@ -8,12 +8,17 @@
 # http://www.opensource.org/licenses/MIT-license
 # Copyright (c) 2016, Jose L. Bellod Cisneros & Kosai Al-Nakked
 # <bellod.cisneros@gmail.com & kosai@cbs.dtu.dk>
+version: '2.1'
 
-global_sewage_app:
-    build: .
-    # command: redis-server ./redis.conf
-    volumes:
-        - $PWD/database/redis:/data
-        - $PWD/database:/usr/data
-    ports:
-        - "4444:4444"
+services:
+    global_sewage_app:
+        build: .
+        command: bash
+        volumes:
+            - $PWD:/usr/src
+    redis:
+        image: redis
+        volumes:
+            - $PWD/database/redis:/data
+        ports:
+            - "6379:6379"
