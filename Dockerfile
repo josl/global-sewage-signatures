@@ -26,20 +26,7 @@ RUN apt-get update && apt-get install -y -qq --no-install-recommends \
 
 
 
-WORKDIR /home/docker/app
+WORKDIR /usr/src
 
-COPY . /home/docker/app
+COPY . /usr/src
 RUN make setup
-
-RUN groupadd -g 1000 docker
-RUN useradd -u 1000 -r -g docker -d /home/docker -s /bin/bash -c "HTTP Server User" docker
-
-RUN mkdir -p /home/docker
-RUN chown -R docker:docker /home/docker
-
-
-ENV HOME /home/docker
-USER docker
-EXPOSE 4444
-
-ENTRYPOINT [ "redis-server", "./redis.conf" ]
