@@ -18,6 +18,7 @@ import threading
 import time
 from bitarray import bitarray
 from struct import *
+import cython
 
 # Hostname comes from docker-compose.yml "depends_on" directive
 redis_db = redis.StrictRedis(db=3, host='redis', port=6379)

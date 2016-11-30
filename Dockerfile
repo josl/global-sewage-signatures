@@ -22,6 +22,7 @@ RUN apt-get update && apt-get install -y -qq --no-install-recommends \
     libcap-dev \
     libsqlite3-dev \
     reprepro \
+    lua5.3.3
  && rm -rf /var/lib/apt/lists/*
 
 
