@@ -20,204 +20,72 @@ from bitarray import bitarray
 from struct import *
 
 # Hostname comes from docker-compose.yml "depends_on" directive
-redis_db = redis.StrictRedis(db=0, host='redis', port=6379)
+redis_db = redis.StrictRedis(db=3, host='redis', port=6379)
 dist = 0.2
 sparse_matrix = []
 hash_funcs = 100
 keys = len(redis_db.keys())
-module = 'global_sewage_signatures'
-lua_file = 'pop_index.sparse.lua'
+
+
 # size = 4**16
 # a = bitarray(size)
-# a.setall(False)
-# a[45] = True
-# a[450] = True
-# a[475] = True
-# a[455680] = True
+# a.setall(True)
+# a[45] = False
 # redis_db.set('test5', a.tobytes())
 
+def worker_dense(key):
 
-def worker(key):
-    tot = redis_db.strlen(key) * 8
+    key = 'test5'
+    print(key)
+    byte_string = redis_db.get(key)
+    bytes_read = 0
+    bytes_to_unpack = 1
+    # bytes_to_unpack = string.len(s)
+    # if bytes_to_unpack > 32 then
+    #      bytes_to_unpack = 1
+    #  end
+    #  max = string.len(s) / bytes_to_unpack
+    max_bytes = len(byte_string)  / bytes_to_unpack
+    tot_bits = max_bytes * 8
+    tot = len(byte_string) * 8
+    zeroes = 0
+    positions = []
+    total_bytes = 1
+    negation = 2 ** (bytes_to_unpack * 8) - 1
+    fmt = str(bytes_to_unpack) + 'B'
     pop = redis_db.bitcount(key)
-    values = []
-    # print(pop, (tot-pop))
-    # print('1\'s (%s) 0\'s (%s) %s' % (pop*100/tot, (tot-pop)*100/tot, tot))
-    if pop < (tot - pop):
-        # out = pop_index(keys=[key])
-        start = time.time()
-        for byte_index in range(0, max, step):
-            out = pop_index(keys=[key], args=[byte_index, step])
-            values.extend(out[2])
-            estimated = (((time.time() - start) / len(values)) * ((tot - pop) - len(values))) / (60*60)
-            sys.stdout.write('Thread: [%s] %s out of total (%.2f) %.2f hours\r' % (key, len(values), (len(values)*100/(tot - pop)), estimated))
-        # if if len(values) <= 3:
-        #     # error
-        #     print('Error S... ', values[1])
-        # else:
-        #     print('Sparse... ', len(values), redis_db.bitcount(key))
-    else:
-        # out = zeroes_index(keys=[key])
-        start = time.time()
-        for byte_index in range(0, max, step):
-            out = zeroes_index(keys=[key], args=[byte_index, step])
-            values.extend(out[2])
-            estimated = (((time.time() - start) / len(values)) * ((tot - pop) - len(values))) / (60*60)
-            sys.stdout.write('Thread: [%s] %s out of total (%.2f) %.2f hours\r' % (key, len(values), (len(values)*100/(tot - pop)), estimated))
-        # if len(values) <= 3:
-        #     # error
-        #     print('Error D... ', values)
-        # else:
-        #     print('Dense... ', tot - len(values), redis_db.bitcount(key))
-    with open(str(key) + '_file.pkl', 'wb') as out_file:
-        pickle.dump(values, output, -1)
-
-with open(resource_filename(module, lua_file)) as lua_file:
-    # Load Lua script as a string
-    lua = lua_file.read()
-    # Lua script now can be called as a function called pop_index(KEY)
-    pop_index = redis_db.register_script(lua)
-    lua_file = 'pop_index.dense.lua'
-    with open(resource_filename(module, lua_file)) as lua_file:
-        lua = lua_file.read()
-        zeroes_index = redis_db.register_script(lua)
-        max = int(2**32 / 8)
-        step = int(2**10 / 8)
-        threads = []
-        for key in range(0, 85):
-            t = threading.Thread(target=worker, args=(key,))
-            threads.append(t)
-            t.start()
-
-exit()
-
-sparsed = []
-for key in range(0, 85):
-    population = redis_db.bitcount(key)
-    sparsed.append(population*100/size)
-    # print('%.2f' % (population*100/size))
-redis_db = redis.StrictRedis(db=1, host='redis', port=6379)
-for key, spar in enumerate(reversed(sorted(sparsed))):
-    redis_db.get(key)
-    print('%s: \t%.2f' % (redis_db.get(key), spar))
-exit()
-
-def worker(key):
-    population = redis_db.bitcount(key)
-    a = bitarray()
-    a.frombytes(redis_db.get(key))
-    index = 0
-    ones = 0
-    # sys.stdout.write('\n')
+    tot = len(byte_string) * 8
     start = time.time()
-    for bit in a:
-        if bit:
-            redis_db.rpush(str(key) + '_index', index)
-            ones += 1
-            estimated = (((time.time() - start) / ones) * (population - ones)) / (60*60)
-            sys.stdout.write('Thread: [%s] bit: %s out of %s (%.2f) %.2f hour\r' % (key, ones, population, 100*ones/population, estimated))
-        index += 1
+    print(bytes_read, max_bytes)
+    while bytes_read < max_bytes:
+        d = unpack_from(fmt, byte_string, bytes_read)
+        bytes_read += (1 * bytes_to_unpack)
+        d = negation - d[0]
+        while d:
+            tot -= 1
+            # zeroes = zeroes + 1
+            # Calculate position of 1
+            # d_ones = d
+            # inner_zeroes = 0
+            # while not d_ones & 1:
+            #     inner_zeroes += 1
+            #     d_ones >>= 1
+            # positions.append(((bytes_read - 1) * 8) - 1 - inner_zeroes)
+            # estimated = (((time.time() - start) / len(positions)) * ((tot_bits - pop) - len(positions))) / (60*60)
+            # sys.stdout.write('Thread: [%s] %s out of total (%s) %.2f hours\r' % (key, len(positions), tot_bits - pop, estimated))
+            d &= d - 1
+
+    print('\n',tot, pop)
+# def worker_sparse(key):
 
 threads = []
-
 for key in range(0, 85):
-    t = threading.Thread(target=worker, args=(key,))
+    tot = redis_db.strlen(key) * 8
+    pop = redis_db.bitcount(key)
+    if pop < (tot - pop) and False:
+        t = threading.Thread(target=worker_sparse, args=(key,))
+    else:
+        t = threading.Thread(target=worker_dense, args=(key,))
     threads.append(t)
     t.start()
-
-
-exit()
-for key in range(0, 85):
-    step = 100
-    total = 536870911
-
-    total_bits = 4**16
-
-    a = bitarray()
-    b = bitarray(total_bits)
-    b[total_bits - 1] = 1
-    a.frombytes(redis_db.get('0'))
-    print(a.length(), b.length())
-    temp = []
-    index = 0
-    ones = 0
-    start = time.time()
-    for bit in a:
-        if bit:
-            ones += 1
-            estimated = (((time.time() - start) / ones) * (population - ones)) / (60*60*24)
-            sys.stdout.write('bit: %s out of %s (%.2f) %.2f days\r' % (ones, population, 100*ones/population, estimated))
-            temp.append(index)
-        index += 1
     break
-exit()
-
-with open(resource_filename(module, lua_file)) as lua_file:
-    # Load Lua script as a string
-    lua = lua_file.read()
-    # Lua script now can be called as a function called pop_index(KEY)
-    pop_index = redis_db.register_script(lua)
-    start = time.time()
-    ones = 0
-    for i in range(total_bits - 1, -1, -1):
-        bit_i = pop_index(keys=['0'], args=[i, total_bits - 1])
-        if bit_i:
-            ones += 1
-            estimated = (((time.time() - start) / ones) * (population - ones)) / (60*60*24)
-            sys.stdout.write('bit: %s out of %s (%.2f) %.2f days\r' % (ones, population, 100*ones/population, estimated))
-exit()
-
-# bit: 2463913 out of 3027838872 (0.08) 20998914.02 days # Slow........
-start = time.time()
-ones = 0
-for start in range(0, total):
-    bit_index = redis_db.bitpos('0', 1, start)
-    ones += 1
-    estimated = (((time.time() - start) / ones) * (population - ones)) / (60*60*24)
-    sys.stdout.write('bit: %s out of %s (%.2f) %.2f days\r' % (ones, population, 100*ones/population, estimated))
-
-exit()
-
-with open(resource_filename(module, lua_file)) as lua_file:
-    # Load Lua script as a string
-    lua = lua_file.read()
-    # Lua script now can be called as a function called pop_index(KEY)
-    pop_index = redis_db.register_script(lua)
-    key = '0'
-    start = 0
-    end = -1
-    step = 100
-    total = 536870911
-    pipe = redis_db.pipeline()
-    # pop_index(keys=[key], args=[start, end], client=pipe)
-    # pop_index(keys=[key], args=[1, -1], client=pipe)
-    # for i in pipe.execute():
-    #     print(i)
-    for start in range(0, total, step):
-
-
-        # value = redis_db.bitpos(key, 1, start, start + end)
-        # while value != -1:
-        #     # Inspecting remaining bits
-        #     for bit in range(value + 1, 7):
-        #         other_ones = pop_index(keys=['0'], args=[bit])
-        #         if other_ones[1] == 1 then
-        #             byte_table[total_count] = start_byte * 8 + i
-        #             total_count = total_count + 1
-        #         end
-
-
-        sys.stdout.write('%s out of total (%.2f)\r' % (start, start*100/total))
-        pop_index(keys=[key], args=[start, start + step], client=pipe)
-    for i in pipe.execute():
-        population = redis_db.bitcount('0')
-        try:
-            print(len(i), population)
-        except:
-            print(i, population)
-        # start += 1
-    # value = pop_index(keys=[key], args=[start, end])
-    # while value != -1:
-    #     print(value)
-    #     start += 1
-    #     value = pop_index(keys=[key], args=[start, end])

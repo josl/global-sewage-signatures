@@ -56,7 +56,8 @@ setup(
         'numpy',
         'pyspark',
         'bitarray'
-        'scipy'
+        'scipy',
+        'cython'
     ],
     extras_require={
         'tests': tests_require,
