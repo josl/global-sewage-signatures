@@ -1,9 +1,8 @@
-local index = 0
-
 local start_byte = 0
 local end_byte = -1
 local index_table = {}
 local total_count = 1
+
 local value = redis.call('BITPOS', KEYS[1], 1, start_byte, end_byte)
 
 -- We start looping over bytes

@@ -53,7 +53,10 @@ setup(
         # remember to use 'package-name>=x.y.z,<x.y+1.0' notation (this way you
         # get bugfixes)
         'redis>=2.10.5,<2.11',
-        'numpy'
+        'numpy',
+        'pyspark',
+        'bitarray'
+        'scipy'
     ],
     extras_require={
         'tests': tests_require,
