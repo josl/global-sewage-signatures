@@ -39,7 +39,7 @@ lua_file = 'pop_index.sparse.lua'
 # a[475] = True
 # a[455680] = True
 # redis_db.set('test5', a.tobytes())
-redis_db.set('test2', '\xd5Y')
+# redis_db.set('test2', '\xd5Y')
 
 lua = LuaRuntime(unpack_returned_tuples=True)
 
@@ -61,40 +61,22 @@ def worker(key):
     found = 0
     if pop < (tot - pop):
         start = time.time()
-        for byte_index in range(0, max_bytes, step):
-            out = pop_index(redis_db.get(key), byte_index+1, step)
-            values.extend(list(out.values()))
-            if len(values) == pop:
-                break
-            estimated = (((time.time() - start) / len(values)) * (pop - len(values))) / (60)
-            sys.stdout.write('Thread(S): [%s] %s out of total (%.2f) %.2f m.\r' % (key, len(values), (len(values)*100/(tot - pop)), estimated))
-    else:
-        # 16777216
-        # 226754576
-        # for byte_index in range(16777216, max_bytes, step):
-        #     out = zeroes_index(redis_db.get(key), byte_index+1, step, pop)
-        #     print(byte_index)
-        # exit()
-        start = time.time()
         totals = 0
-        myco = zeroes_index.coroutine(redis_db.get(key), 1, step, pop)
+        myco = pop_index.coroutine(redis_db.get(key), pop)
         for i in myco:
             totals += 1
             estimated = (((time.time() - start) / totals)) * ((tot - pop) - totals) / (60)
-            sys.stdout.write('%s %s %.2f %.2f m.\n' % (i, pop, totals*100/pop, estimated))
-        # for byte_index in range(0, max_bytes, step):
-        #     out = zeroes_index(redis_db.get(key), byte_index+1, step, pop)
-        #     totals += out
-        #     print(max_bytes,   'Index ', byte_index)
-            # found += len(list(out.values()))
-            # values.extend(list(out.values()))
-            # if tot - len(values) == pop:
-            #     break
-            # estimated = (((time.time() - start) / found)) * ((tot - pop) - found) / (60)
-            # sys.stdout.write('Thread: [%s] %s out of total (%s)\r' % (key, len(values), tot - pop))
-            # sys.stdout.write('Thread(D): [%s] %s out of total (%s) %.2f m.\r' % (key, found, tot - pop, estimated))
+            sys.stdout.write('Sparse: %s %s %.2f %.2f m.\r' % (i, pop, totals*100/pop, estimated))
         print(totals, pop)
-        exit()
+    else:
+        start = time.time()
+        totals = 0
+        myco = zeroes_index.coroutine(redis_db.get(key), tot - pop)
+        for i in myco:
+            totals += 1
+            estimated = (((time.time() - start) / totals)) * ((tot - pop) - totals) / (60)
+            sys.stdout.write('Dense: %s Totals: %s %.2f %.2f m.\r' % (i, tot - pop, totals*100/(tot - pop), estimated))
+        print(totals, tot - pop, pop)
     with open(str(key) + '_file.pkl', 'wb') as out_file:
         pickle.dump(values, out_file, -1)
 
@@ -103,17 +85,14 @@ with open(resource_filename(module, lua_file)) as lua_file:
     # Load Lua script as a string
     lua_code = lua_file.read()
     # Lua script now can be called as a function called pop_index(KEY)
-    # pop_index = redis_db.register_script(lua)
     pop_index = lua.eval(lua_code)
     lua_file = 'pop_index.dense.lua'
     with open(resource_filename(module, lua_file)) as lua_file:
         lua_code = lua_file.read()
         zeroes_index = lua.eval(lua_code)
-        # zeroes_index = redis_db.register_script(lua)
-
         threads = []
         for key in redis_db.keys():
-            t = threading.Thread(target=worker, args=('test2',))
+            t = threading.Thread(target=worker, args=(key,))
             threads.append(t)
             t.start()
             break
