@@ -54,10 +54,11 @@ setup(
         # get bugfixes)
         'redis>=2.10.5,<2.11',
         'numpy',
-        'pyspark',
-        'bitarray'
+        # 'pyspark',
+        'bitarray',
         'scipy',
-        'cython'
+        'cython',
+        'lupa'
     ],
     extras_require={
         'tests': tests_require,
