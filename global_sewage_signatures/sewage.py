@@ -21,8 +21,6 @@ import time
 import numpy as np
 import math
 
-
-
 class MinHashRedis(MH.MinHash):
 
     def __init__(self, dist, h_funcs, docs, features, redis_db):

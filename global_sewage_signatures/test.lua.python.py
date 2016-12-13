@@ -31,18 +31,11 @@ hash_funcs = 100
 keys = len(redis_db.keys())
 module = 'global_sewage_signatures'
 lua_file = 'pop_index.sparse.lua'
-<<<<<<< HEAD
+
 size = 4**16
 a = bitarray(size)
 a.setall(True)
 a[45] = False
-
-# a[450] = True
-# a[475] = True
-# a[455680] = True
-# redis_db.set('test5', a.tobytes())
-# redis_db.set('test2', '\xd5Y')
-
 
 lua = LuaRuntime(unpack_returned_tuples=True)
 
@@ -97,7 +90,6 @@ with open(resource_filename(module, lua_file)) as lua_file:
         zeroes_index = lua.eval(lua_code)
         threads = []
         for key in redis_db.keys():
-
             t = threading.Thread(target=worker, args=(key,))
             threads.append(t)
             t.start()
@@ -208,8 +200,6 @@ with open(resource_filename(module, lua_file)) as lua_file:
     # for i in pipe.execute():
     #     print(i)
     for start in range(0, total, step):
-
-
         # value = redis_db.bitpos(key, 1, start, start + end)
         # while value != -1:
         #     # Inspecting remaining bits
@@ -219,8 +209,6 @@ with open(resource_filename(module, lua_file)) as lua_file:
         #             byte_table[total_count] = start_byte * 8 + i
         #             total_count = total_count + 1
         #         end
-
-
         sys.stdout.write('%s out of total (%.2f)\r' % (start, start*100/total))
         pop_index(keys=[key], args=[start, start + step], client=pipe)
     for i in pipe.execute():
