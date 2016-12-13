@@ -29,8 +29,8 @@ setup(
     version=__version__,
     description='Grouping of global sewage samples based on DNA signatures',
     long_description='''
-Grouping of global sewage samples based on DNA signatures
-''',
+        Grouping of global sewage samples based on DNA signatures
+    ''',
     keywords='DNA redis sequencing bioinformatics metagenomics',
     author='Jose L. Bellod Cisneros & Kosai Al-Nakked',
     author_email='bellod.cisneros@gmail.com & kosai@cbs.dtu.dk',
@@ -48,12 +48,17 @@ Grouping of global sewage samples based on DNA signatures
         'Operating System :: OS Independent',
     ],
     packages=find_packages(),
-    include_package_data=True,
     install_requires=[
         # add your dependencies here
         # remember to use 'package-name>=x.y.z,<x.y+1.0' notation (this way you
         # get bugfixes)
         'redis>=2.10.5,<2.11',
+        'numpy',
+        # 'pyspark',
+        'bitarray',
+        'scipy',
+        'cython',
+        'lupa'
     ],
     extras_require={
         'tests': tests_require,

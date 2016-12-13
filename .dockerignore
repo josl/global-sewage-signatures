@@ -90,3 +90,6 @@ venv/
 */*.swp
 */*/*.swp
 */*/*/*.swp
+
+# Databaase
+database/

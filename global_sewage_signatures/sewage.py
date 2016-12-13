@@ -22,6 +22,7 @@ import numpy as np
 import math
 
 
+
 class MinHashRedis(MH.MinHash):
 
     def __init__(self, dist, h_funcs, docs, features, redis_db):
@@ -131,6 +132,7 @@ class MinHashRedis(MH.MinHash):
                 t.start()
             for t in threads:
                 t.join()
+
 
 # Hostname comes from docker-compose.yml "depends_on" directive
 redis_db = redis.StrictRedis(db=0, host='redis', port=6379)
