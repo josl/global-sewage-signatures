@@ -9,19 +9,15 @@
 # Copyright (c) 2016, Jose L. Bellod Cisneros & Kosai Al-Nakked
 # <bellod.cisneros@gmail.com & kosai@cbs.dtu.dk>
 
-# from global_sewage_signatures import MinHash as MH
+from global_sewage_signatures import MinHash as MH
 import redis
 from pkg_resources import resource_filename
-# import numpy as np
+import numpy as np
 import sys
 import threading
 import time
 from bitarray import bitarray
 from struct import *
-import lupa
-from lupa import LuaRuntime
-import pickle
-
 
 # Hostname comes from docker-compose.yml "depends_on" directive
 redis_db = redis.StrictRedis(db=0, host='redis', port=6379)
@@ -31,86 +27,67 @@ hash_funcs = 100
 keys = len(redis_db.keys())
 module = 'global_sewage_signatures'
 lua_file = 'pop_index.sparse.lua'
-
 # size = 4**16
 # a = bitarray(size)
-# a.setall(True)
-# a[45] = False
+# a.setall(False)
+# a[45] = True
 # a[450] = True
 # a[475] = True
 # a[455680] = True
 # redis_db.set('test5', a.tobytes())
-# redis_db.set('test2', '\xd5Y')
-
-totals = 0
-for n in struct.unpack('Q'*int(len(a.tobytes())/8), a.tobytes()):
-    # Hamming Weight
-    while n:
-        n &= n - -1
-        totals += 1
-print(totals)
-exit()
-
-lua = LuaRuntime(unpack_returned_tuples=True)
-
-# with open(resource_filename(module, 'coroutine.lua')) as lua_file:
-#     # Load Lua script as a string
-#     lua_code = lua_file.read()
-#     # Lua script now can be called as a function called pop_index(KEY)
-#     my_test = lua.eval(lua_code)
-#     co = my_test.coroutine(4)
-#     print(list(enumerate(co)))
-# exit()
 
 
 def worker(key):
-    max_bytes = int(2**32 / 8)
-    step = int(2**232 / 8)
     tot = redis_db.strlen(key) * 8
     pop = redis_db.bitcount(key)
     values = []
-    found = 0
-
+    # print(pop, (tot-pop))
+    # print('1\'s (%s) 0\'s (%s) %s' % (pop*100/tot, (tot-pop)*100/tot, tot))
     if pop < (tot - pop):
+        # out = pop_index(keys=[key])
         start = time.time()
-        totals = 0
-        myco = pop_index.coroutine(redis_db.get(key), pop)
-        for i in myco:
-            totals += 1
-            estimated = (((time.time() - start) / totals)) * ((tot - pop) - totals) / (60)
-            sys.stdout.write('Sparse: %s %s %.2f %.2f m.\r' % (i, pop, totals*100/pop, estimated))
-        print(totals, pop)
+        for byte_index in range(0, max, step):
+            out = pop_index(keys=[key], args=[byte_index, step])
+            values.extend(out[2])
+            estimated = (((time.time() - start) / len(values)) * ((tot - pop) - len(values))) / (60*60)
+            sys.stdout.write('Thread: [%s] %s out of total (%.2f) %.2f hours\r' % (key, len(values), (len(values)*100/(tot - pop)), estimated))
+        # if if len(values) <= 3:
+        #     # error
+        #     print('Error S... ', values[1])
+        # else:
+        #     print('Sparse... ', len(values), redis_db.bitcount(key))
     else:
+        # out = zeroes_index(keys=[key])
         start = time.time()
-        totals = 0
-        myco = zeroes_index.coroutine(redis_db.get(key), tot - pop)
-        for i in myco:
-            totals += 1
-            estimated = (((time.time() - start) / totals)) * ((tot - pop) - totals) / (60)
-            sys.stdout.write('Dense: %s Totals: %s %.2f %.2f m.\r' % (i, tot - pop, totals*100/(tot - pop), estimated))
-        print(totals, tot - pop, pop)
+        for byte_index in range(0, max, step):
+            out = zeroes_index(keys=[key], args=[byte_index, step])
+            values.extend(out[2])
+            estimated = (((time.time() - start) / len(values)) * ((tot - pop) - len(values))) / (60*60)
+            sys.stdout.write('Thread: [%s] %s out of total (%.2f) %.2f hours\r' % (key, len(values), (len(values)*100/(tot - pop)), estimated))
+        # if len(values) <= 3:
+        #     # error
+        #     print('Error D... ', values)
+        # else:
+        #     print('Dense... ', tot - len(values), redis_db.bitcount(key))
     with open(str(key) + '_file.pkl', 'wb') as out_file:
-        pickle.dump(values, out_file, -1)
-
+        pickle.dump(values, output, -1)
 
 with open(resource_filename(module, lua_file)) as lua_file:
     # Load Lua script as a string
-    lua_code = lua_file.read()
+    lua = lua_file.read()
     # Lua script now can be called as a function called pop_index(KEY)
-    pop_index = lua.eval(lua_code)
+    pop_index = redis_db.register_script(lua)
     lua_file = 'pop_index.dense.lua'
     with open(resource_filename(module, lua_file)) as lua_file:
-        lua_code = lua_file.read()
-        zeroes_index = lua.eval(lua_code)
+        lua = lua_file.read()
+        zeroes_index = redis_db.register_script(lua)
+        max = int(2**32 / 8)
+        step = int(2**10 / 8)
         threads = []
-        for key in redis_db.keys():
-            # worker('test5')
-            worker('71_RD_R1_001.b16')
-            # worker('71_RD_R1_001.b16')
-            # t = threading.Thread(target=worker, args=('71_RD_R1_001.b16',))
-            # threads.append(t)
-            # t.start()
-            break
+        for key in range(0, 85):
+            t = threading.Thread(target=worker, args=(key,))
+            threads.append(t)
+            t.start()
 
 exit()
 

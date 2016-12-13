@@ -12,29 +12,23 @@ The main goal is to investigate if it is possible to group samples together geog
 
 If you prefer to avoid installing redis yourself we provide a Docker container. Follow the instructions here:
 
+This command will build the sewage_app container based on the Dockerfile and start and interactive bash session to keep the container alive. The global_sewage_module is installed along all dependencies (mainly the redis python wrapper)
+This container will be linked to another container running redis. From the sewage_app container, redis db can be accessed on host "redis" port 6379.
 ```bash
 # Build Docker images
-docker build -t sewage-signatures .
-
-# Run container
-docker run --name sewage-redis -d sewage-signatures
+docker-compose up -d
 ```
 
-If redis is install you need to start an instance of the database on port 4444
-
+To interact with the sewage_app:
 ```bash
-make redis
+docker exec -ti sewage_app bash
 ```
 
-Then, you need to create a Redis Protocol file with all your redis comands
-
+To load data into redis:
 ```bash
-./scripts/mass_insertion.py --folder=/home/projects/cge/people/olund/projects/sewage/sewage5/ --output=dataset/redis_protocol.txt
+TODO
 ```
 
-```bash
-./scripts/mass_insertion.py --folder=/home/projects/cge/people/olund/projects/sewage/sewage5/ --output=dataset/redis_protocol.txt
-```
 
 ## General Comands for Development
 
@@ -46,6 +40,13 @@ General commands:
 - "make setup" to install all dependencies (do not forget to create a virtualenv first);
 - "make test" to test your application (tests in the tests/ directory);
 - "make tox" to run tests against all supported python versions.
+
+## Useful Docker commands
+
+```bash
+#Removes all exited containers
+docker rm $(docker ps -qa --no-trunc --filter "status=exited")
+```
 
 ## License
 

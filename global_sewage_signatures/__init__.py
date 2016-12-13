@@ -10,6 +10,3 @@
 # <bellod.cisneros@gmail.com & kosai@cbs.dtu.dk>
 
 from global_sewage_signatures.version import __version__  # NOQA
-import redis
-
-redis_db = redis.StrictRedis(db=0, port=6379)
